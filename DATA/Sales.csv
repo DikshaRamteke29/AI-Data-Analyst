@@ -1,0 +1,11 @@
+Order_ID,Date,Product,Category,Region,Quantity,Sales,Profit
+1001,2026-01-05,Laptop,Electronics,North,2,120000,18000
+1002,2026-01-07,Mouse,Accessories,South,10,15000,5000
+1003,2026-01-10,Keyboard,Accessories,West,8,24000,8000
+1004,2026-01-15,Monitor,Electronics,East,4,80000,12000
+1005,2026-01-18,Laptop,Electronics,West,3,180000,27000
+1006,2026-02-02,Mouse,Accessories,North,15,22500,7500
+1007,2026-02-10,Monitor,Electronics,South,5,100000,15000
+1008,2026-02-15,Keyboard,Accessories,East,12,36000,12000
+1009,2026-03-01,Laptop,Electronics,South,2,120000,18000
+1010,2026-03-05,Monitor,Electronics,West,6,120000,18000

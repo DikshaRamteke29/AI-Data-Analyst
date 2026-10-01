@@ -1,5 +1,6 @@
 import ast
 import operator
+from urllib import response
 
 import streamlit as st
 import pandas as pd
@@ -61,16 +62,19 @@ st.divider()
 st.subheader("📁 Upload Your Dataset")
 
 uploaded_file = st.file_uploader(
-    "Upload a CSV file",
-    type=["csv"]
+    "Upload your dataset",
+    type=["csv", "xlsx"],
+    help="Upload a CSV or Excel file."
 )
-
 
 if uploaded_file is not None:
 
     try:
-
-        df = pd.read_csv(uploaded_file)
+      
+        if uploaded_file.name.lower().endswith(".csv"):
+            df = pd.read_csv(uploaded_file)
+        else:
+            df = pd.read_excel(uploaded_file)  
 
         st.success(
             f"Dataset '{uploaded_file.name}' uploaded successfully."
@@ -108,12 +112,13 @@ else:
 
 columns = list(df.columns)
 
-sample = df.head(5).to_dict()
+sample = df.head(5).to_dict(orient="records")
+
+data_types = df.dtypes.astype(str).to_dict()
 
 
 
 # AI FUNCTION
-
 def ask_ai(question):
 
     prompt = f"""
@@ -127,6 +132,9 @@ Dataset columns:
 Sample data:
 {sample}
 
+Column data types:
+{data_types}
+
 Convert the user's natural-language question into ONE valid
 Pandas expression using only df.
 
@@ -135,101 +143,88 @@ User question:
 
 IMPORTANT RULES:
 
-1. Return ONLY the Pandas expression.
-2. Do NOT use markdown.
-3. Do NOT use ``` .
-4. Do NOT explain the code.
-5. Use only the DataFrame called df.
-6. Do not create variables.
-7. Do not import anything.
-8. Do not use eval, exec, open, compile, __import__,
-   globals, locals, os, sys or subprocess.
-9. Do not invent column names.
-10. Use only columns that actually exist.
-11. For total use .sum().
-12. For average use .mean().
-13. For minimum use .min().
-14. For maximum use .max().
-15. For unique values use .nunique().
-16. For totals by category use groupby().sum().
-17. For averages by category use groupby().mean().
-18. For highest category use groupby().sum().idxmax().
-19. For lowest category use groupby().sum().idxmin().
-20. For sorting use sort_values().
-21. For top results use sort_values().head().
-22. For bottom results use sort_values().tail().
-23. For filtering use boolean conditions.
-24. Keep the expression simple.
+1. Return ONLY ONE valid Pandas expression.
+2. Return the expression on ONE LINE.
+3. Do NOT use markdown.
+4. Do NOT use ``` .
+5. Do NOT write "Code:".
+6. Do NOT write "Pandas code:".
+7. Do NOT explain anything.
+8. Use only the DataFrame called df.
+9. Do not create variables.
+10. Do not import anything.
+11. Do not use eval().
+12. Do not use exec().
+13. Do not use lambda.
+14. Do not use apply().
+15. Do not use assign().
+16. Do not use custom functions.
+17. Do not use open().
+18. Do not use compile().
+19. Do not use __import__().
+20. Do not use os.
+21. Do not use sys.
+22. Do not use subprocess.
+23. Do not invent column names.
+24. Use ONLY columns that actually exist in the dataset.
+25. Use .sum() for totals.
+26. Use .mean() for averages.
+27. Use .min() for minimum values.
+28. Use .max() for maximum values.
+29. Use .nunique() for unique counts.
+30. Use .count() for non-null counts.
+31. Use groupby() for grouped calculations.
+32. Use sort_values() for sorting.
+33. Use head() for top results.
+34. Use tail() for bottom results.
+35. Use idxmax() for finding the category with the highest value.
+36. Use idxmin() for finding the category with the lowest value.
+37. Use boolean conditions for filtering.
+38. For calculations between two columns, use direct column arithmetic.
+39. Keep the expression simple.
+40. Do not use join().
+41. Do not use merge().
+42. Do not use concat().
+43. Do not use pivot().
+44. Do not use pivot_table().
+45. Do not use lambda or apply() for calculations.
+46. Do not use any Pandas method other than the methods explicitly demonstrated in the examples below.
+47. For "which product/region/category has the highest sales", use groupby(), sum(), and idxmax().
+48. For "which product/region/category has the lowest sales", use groupby(), sum(), and idxmin().
+49. For "top N products/regions/categories", use groupby(), sum(), sort_values(), and head(N).
+50. For grouped totals, use groupby() followed by the required aggregation method.
+51. Do not use join(), merge(), concat(), pivot(), or pivot_table() even if they appear useful.
+52. Do not assume that Sales, Profit, Product, Region, Quantity, Unit_Price, or any other specific column exists.
+53. Choose columns ONLY from the provided dataset columns.
+54. Return exactly ONE Pandas expression.
 
-Examples:
+Examples of valid expressions:
 
-Question:
-What is the total sales?
-
-Code:
 df['Sales'].sum()
 
-Question:
-What is the average sales?
-
-Code:
 df['Sales'].mean()
 
-Question:
-How many unique products are there?
-
-Code:
 df['Product'].nunique()
 
-Question:
-Which region has the highest sales?
-
-Code:
-df.groupby('Region')['Sales'].sum().idxmax()
-
-Question:
-Which region has the lowest sales?
-
-Code:
-df.groupby('Region')['Sales'].sum().idxmin()
-
-Question:
-What is the total sales by region?
-
-Code:
 df.groupby('Region')['Sales'].sum()
 
-Question:
-What is the total profit by region?
+df.groupby('Region')['Sales'].sum().idxmax()
 
-Code:
-df.groupby('Region')['Profit'].sum()
-
-Question:
-Which product has the highest sales?
-
-Code:
-df.groupby('Product')['Sales'].sum().idxmax()
-
-Question:
-Show the top 3 products by sales.
-
-Code:
 df.groupby('Product')['Sales'].sum().sort_values(ascending=False).head(3)
 
-Question:
-Show the regions from highest sales to lowest sales.
-
-Code:
-df.groupby('Region')['Sales'].sum().sort_values(ascending=False)
-
-Question:
-Show sales greater than 50000.
-
-Code:
 df[df['Sales'] > 50000]
 
-Return ONLY ONE Pandas expression.
+For calculations involving two columns, use direct arithmetic.
+
+Example:
+
+(df['Quantity'] * df['Unit_Price']).sum()
+
+For grouped calculations:
+
+(df['Quantity'] * df['Unit_Price']).groupby(df['Region']).sum()
+
+Return ONLY ONE expression on ONE LINE.
 """
 
     client = Groq(
@@ -244,15 +239,20 @@ Return ONLY ONE Pandas expression.
                 "content": prompt
             }
         ],
-        temperature=0
+        temperature=0,
+        
     )
 
-    return response.choices[0].message.content.strip()
+    ai_response = response.choices[0].message.content
+
+    
+
+    return ai_response.strip()  
+
 # ALLOWED METHODS
 
 
 ALLOWED_METHODS = {
-
     "sum",
     "mean",
     "min",
@@ -266,10 +266,10 @@ ALLOWED_METHODS = {
     "idxmax",
     "idxmin",
     "reset_index",
-    "value_counts"
+    "value_counts",
+    
 
 }
-
 
 
 # ALLOWED ATTRIBUTES
@@ -729,22 +729,106 @@ def controlled_execute(
 
     expression = expression.strip()
 
-
+    # --------------------------------------------------------
     # Remove markdown code blocks
-    if expression.startswith("```"):
+    # --------------------------------------------------------
 
-        expression = expression.replace(
-            "```python",
-            ""
+    expression = expression.replace(
+        "```python",
+        ""
+    )
+
+    expression = expression.replace(
+        "```",
+        ""
+    )
+
+    expression = expression.strip()
+
+    # --------------------------------------------------------
+    # Remove common AI prefixes
+    # --------------------------------------------------------
+
+    if expression.lower().startswith(
+        "pandas code:"
+    ):
+
+        expression = expression[
+            len("pandas code:")
+        ].strip()
+
+    if expression.lower().startswith(
+        "code:"
+    ):
+
+        expression = expression[
+            len("code:")
+        ].strip()
+
+    # --------------------------------------------------------
+    # Check empty response
+    # --------------------------------------------------------
+
+    if not expression:
+
+        raise ValueError(
+            "AI returned an empty Pandas expression."
         )
 
-        expression = expression.replace(
-            "```",
-            ""
-        )
+    # --------------------------------------------------------
+    # Security checks
+    # --------------------------------------------------------
 
-        expression = expression.strip()
+    forbidden_patterns = [
+        "apply(",
+        "lambda",
+        "assign(",
+        "eval(",
+        "exec(",
+        "__import__",
+        "subprocess",
+        "os.",
+        "sys.",
+        "open(",
+        "compile(",
+        "globals(",
+        "locals("
+    ]
 
+    expression_lower = expression.lower()
+
+    for pattern in forbidden_patterns:
+
+        if pattern in expression_lower:
+
+            raise ValueError(
+                f"Unsafe expression detected: {pattern}"
+            )
+
+    # --------------------------------------------------------
+    # Require one expression
+    # --------------------------------------------------------
+
+    if "\n" in expression:
+
+        lines = [
+            line.strip()
+            for line in expression.splitlines()
+            if line.strip()
+        ]
+
+        if len(lines) > 1:
+
+            raise ValueError(
+                "AI returned multiple lines. "
+                "Please try the question again."
+            )
+
+        expression = lines[0]
+
+    # --------------------------------------------------------
+    # Parse expression safely
+    # --------------------------------------------------------
 
     try:
 
@@ -759,6 +843,9 @@ def controlled_execute(
             f"Invalid Pandas expression: {e}"
         )
 
+    # --------------------------------------------------------
+    # Evaluate safely
+    # --------------------------------------------------------
 
     return evaluate_node(
         tree.body,
@@ -1051,3 +1138,6 @@ st.divider()
 st.caption(
     "Built with Python • Pandas • GPT-OSS 20B • Groq • Streamlit"
 )
+
+
+

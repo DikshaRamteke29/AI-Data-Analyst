@@ -5,7 +5,7 @@ from urllib import response
 import streamlit as st
 import pandas as pd
 from groq import Groq
-
+from pathlib import Path
 
 
 # PAGE CONFIGURATION
@@ -92,8 +92,7 @@ else:
 
     try:
 
-        df = pd.read_csv("Sales.csv")
-
+        df = pd.read_csv(Path(__file__).resolve().parent / "Sales.csv")
         st.info(
             "No file uploaded. Using the default sales dataset."
         )

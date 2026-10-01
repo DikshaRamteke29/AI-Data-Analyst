@@ -3,13 +3,11 @@ import operator
 
 import streamlit as st
 import pandas as pd
-import ollama
+from groq import Groq
 
 
 
 # PAGE CONFIGURATION
-=
-
 st.set_page_config(
     page_title="AI Data Analyst",
     page_icon="🤖",
@@ -135,18 +133,17 @@ Pandas expression using only df.
 User question:
 {question}
 
-
 IMPORTANT RULES:
 
 1. Return ONLY the Pandas expression.
 2. Do NOT use markdown.
-3. Do NOT use ```.
+3. Do NOT use ``` .
 4. Do NOT explain the code.
 5. Use only the DataFrame called df.
 6. Do not create variables.
 7. Do not import anything.
-8. Do not use Python functions such as eval, exec, open,
-   compile, __import__, globals, locals, os, sys or subprocess.
+8. Do not use eval, exec, open, compile, __import__,
+   globals, locals, os, sys or subprocess.
 9. Do not invent column names.
 10. Use only columns that actually exist.
 11. For total use .sum().
@@ -164,9 +161,7 @@ IMPORTANT RULES:
 23. For filtering use boolean conditions.
 24. Keep the expression simple.
 
-
-EXAMPLES:
-
+Examples:
 
 Question:
 What is the total sales?
@@ -174,13 +169,11 @@ What is the total sales?
 Code:
 df['Sales'].sum()
 
-
 Question:
 What is the average sales?
 
 Code:
 df['Sales'].mean()
-
 
 Question:
 How many unique products are there?
@@ -188,13 +181,11 @@ How many unique products are there?
 Code:
 df['Product'].nunique()
 
-
 Question:
 Which region has the highest sales?
 
 Code:
 df.groupby('Region')['Sales'].sum().idxmax()
-
 
 Question:
 Which region has the lowest sales?
@@ -202,13 +193,11 @@ Which region has the lowest sales?
 Code:
 df.groupby('Region')['Sales'].sum().idxmin()
 
-
 Question:
 What is the total sales by region?
 
 Code:
 df.groupby('Region')['Sales'].sum()
-
 
 Question:
 What is the total profit by region?
@@ -216,13 +205,11 @@ What is the total profit by region?
 Code:
 df.groupby('Region')['Profit'].sum()
 
-
 Question:
 Which product has the highest sales?
 
 Code:
 df.groupby('Product')['Sales'].sum().idxmax()
-
 
 Question:
 Show the top 3 products by sales.
@@ -230,13 +217,11 @@ Show the top 3 products by sales.
 Code:
 df.groupby('Product')['Sales'].sum().sort_values(ascending=False).head(3)
 
-
 Question:
 Show the regions from highest sales to lowest sales.
 
 Code:
 df.groupby('Region')['Sales'].sum().sort_values(ascending=False)
-
 
 Question:
 Show sales greater than 50000.
@@ -244,23 +229,25 @@ Show sales greater than 50000.
 Code:
 df[df['Sales'] > 50000]
 
-
 Return ONLY ONE Pandas expression.
 """
 
-    response = ollama.chat(
-        model="llama3.2",
+    client = Groq(
+        api_key=st.secrets["GROQ_API_KEY"]
+    )
+
+    response = client.chat.completions.create(
+        model="openai/gpt-oss-20b",
         messages=[
             {
                 "role": "user",
                 "content": prompt
             }
-        ]
+        ],
+        temperature=0
     )
 
-    return response["message"]["content"].strip()
-
-
+    return response.choices[0].message.content.strip()
 # ALLOWED METHODS
 
 
@@ -1058,8 +1045,9 @@ if question:
 
 # FOOTER
 
+
 st.divider()
 
 st.caption(
-    "Built with Python • Pandas • Llama 3.2 • Ollama • Streamlit"
+    "Built with Python • Pandas • GPT-OSS 20B • Groq • Streamlit"
 )

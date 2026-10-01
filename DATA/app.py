@@ -88,7 +88,7 @@ else:
 
     try:
 
-        df = pd.read_csv("sales.csv")
+        df = pd.read_csv("Sales.csv")
 
         st.info(
             "No file uploaded. Using the default sales dataset."
@@ -97,7 +97,7 @@ else:
     except Exception as e:
 
         st.error(
-            f"Unable to load sales.csv: {e}"
+            f"Unable to load Sales.csv: {e}"
         )
 
         st.stop()
